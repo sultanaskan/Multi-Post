@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+
+    <string name="app_name">MultiPost</string>
+
+    <string name="nav_home">Home</string>
+    <string name="nav_upload">Upload</string>
+    <string name="nav_accounts">Accounts</string>
+    <string name="nav_history">History</string>
+
+    <string name="home_title">Welcome to MultiPost</string>
+    <string name="home_subtitle">Publish your videos to multiple platforms.</string>
+
+    <string name="upload_title">Upload</string>
+    <string name="upload_subtitle">Choose a video to start publishing.</string>
+
+    <string name="accounts_title">Accounts</string>
+    <string name="accounts_subtitle">Connect and manage your social accounts.</string>
+
+    <string name="history_title">History</string>
+    <string name="history_subtitle">Your published videos will appear here.</string>
+
+</resources>

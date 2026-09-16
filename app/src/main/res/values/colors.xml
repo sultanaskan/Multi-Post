@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+
+    <color name="primary">#6750A4</color>
+    <color name="primary_dark">#4F378B</color>
+
+    <color name="background">#FAF8FF</color>
+    <color name="surface">#FFFFFF</color>
+
+    <color name="text_primary">#1D1B20</color>
+    <color name="text_secondary">#49454F</color>
+
+    <color name="nav_selected">#6750A4</color>
+    <color name="nav_unselected">#79747E</color>
+
+</resources>
