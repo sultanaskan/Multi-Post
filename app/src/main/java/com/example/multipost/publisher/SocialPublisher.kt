@@ -19,4 +19,8 @@ sealed class PublishResult {
     data class Failure(
         val message: String
     ) : PublishResult()
+
+    data class AuthenticationRequired(
+        val message: String
+    ) : PublishResult()
 }

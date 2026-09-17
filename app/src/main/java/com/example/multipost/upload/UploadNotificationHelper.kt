@@ -8,18 +8,28 @@ import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.example.multipost.MainActivity
-import com.example.multipost.R
+import com.example.multipost.auth.YouTubeAuthActivity
 
 class UploadNotificationHelper(
     private val context: Context
 ) {
 
     companion object {
-        const val CHANNEL_ID = "multipost_uploads"
-        const val CHANNEL_NAME = "Upload Progress"
-        const val NOTIFICATION_ID_BASE = 5000
 
-        const val EXTRA_OPEN_HISTORY = "open_history"
+        const val CHANNEL_ID =
+            "multipost_uploads"
+
+        const val CHANNEL_NAME =
+            "Upload Progress"
+
+        const val NOTIFICATION_ID_BASE =
+            5000
+
+        const val EXTRA_OPEN_HISTORY =
+            "open_history"
+
+        const val EXTRA_AUTH_REQUIRED =
+            "auth_required"
     }
 
     init {
@@ -30,20 +40,25 @@ class UploadNotificationHelper(
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "Shows MultiPost upload progress"
-            }
+            val channel =
+                NotificationChannel(
+                    CHANNEL_ID,
+                    CHANNEL_NAME,
+                    NotificationManager.IMPORTANCE_LOW
+                ).apply {
+
+                    description =
+                        "Shows MultiPost upload progress"
+                }
 
             val manager =
                 context.getSystemService(
                     Context.NOTIFICATION_SERVICE
                 ) as NotificationManager
 
-            manager.createNotificationChannel(channel)
+            manager.createNotificationChannel(
+                channel
+            )
         }
     }
 
@@ -51,29 +66,64 @@ class UploadNotificationHelper(
         jobId: Long
     ): PendingIntent {
 
-        val intent = Intent(
-            context,
-            MainActivity::class.java
-        ).apply {
+        val intent =
+            Intent(
+                context,
+                MainActivity::class.java
+            ).apply {
 
-            putExtra(
-                EXTRA_OPEN_HISTORY,
-                true
-            )
+                putExtra(
+                    EXTRA_OPEN_HISTORY,
+                    true
+                )
 
-            putExtra(
-                "job_id",
-                jobId
-            )
+                putExtra(
+                    "job_id",
+                    jobId
+                )
 
-            flags =
-                Intent.FLAG_ACTIVITY_SINGLE_TOP or
-                        Intent.FLAG_ACTIVITY_CLEAR_TOP
-        }
+                flags =
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                            Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
 
         return PendingIntent.getActivity(
             context,
             getNotificationId(jobId),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or
+                    PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
+    private fun createYouTubeAuthPendingIntent(
+        jobId: Long
+    ): PendingIntent {
+
+        val intent =
+            Intent(
+                context,
+                YouTubeAuthActivity::class.java
+            ).apply {
+
+                putExtra(
+                    EXTRA_AUTH_REQUIRED,
+                    true
+                )
+
+                putExtra(
+                    "job_id",
+                    jobId
+                )
+
+                flags =
+                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                            Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+
+        return PendingIntent.getActivity(
+            context,
+            getNotificationId(jobId) + 1,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or
                     PendingIntent.FLAG_IMMUTABLE
@@ -106,7 +156,9 @@ class UploadNotificationHelper(
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setContentIntent(
-                createHistoryPendingIntent(jobId)
+                createHistoryPendingIntent(
+                    jobId
+                )
             )
             .build()
 
@@ -129,7 +181,41 @@ class UploadNotificationHelper(
             )
             .setAutoCancel(true)
             .setContentIntent(
-                createHistoryPendingIntent(jobId)
+                createHistoryPendingIntent(
+                    jobId
+                )
+            )
+            .build()
+
+    fun buildAuthenticationRequiredNotification(
+        jobId: Long,
+        platform: String
+    ) =
+        NotificationCompat.Builder(
+            context,
+            CHANNEL_ID
+        )
+            .setSmallIcon(
+                android.R.drawable.stat_notify_error
+            )
+            .setContentTitle(
+                "$platform authorization required"
+            )
+            .setContentText(
+                "Your $platform authorization has expired. Reconnect your account."
+            )
+            .setAutoCancel(true)
+            .setContentIntent(
+                createYouTubeAuthPendingIntent(
+                    jobId
+                )
+            )
+            .addAction(
+                android.R.drawable.ic_menu_manage,
+                "Reconnect",
+                createYouTubeAuthPendingIntent(
+                    jobId
+                )
             )
             .build()
 
@@ -152,7 +238,9 @@ class UploadNotificationHelper(
             )
             .setAutoCancel(true)
             .setContentIntent(
-                createHistoryPendingIntent(jobId)
+                createHistoryPendingIntent(
+                    jobId
+                )
             )
             .build()
 
@@ -163,5 +251,4 @@ class UploadNotificationHelper(
         return NOTIFICATION_ID_BASE +
                 jobId.toInt()
     }
-
 }

@@ -35,6 +35,21 @@ class PublishRepository(
                 )
 
                 put(
+                    "youtube_title",
+                    job.youtubeTitle
+                )
+
+                put(
+                    "youtube_privacy",
+                    job.youtubePrivacy
+                )
+
+                put(
+                    "hashtags",
+                    job.hashtags
+                )
+
+                put(
                     "status",
                     job.status
                 )
@@ -95,44 +110,14 @@ class PublishRepository(
                 return null
             }
 
-            return PublishJob(
-                id = it.getLong(
-                    it.getColumnIndexOrThrow("id")
-                ),
-                videoId = it.getNullableLong(
-                    "video_id"
-                ),
-                platform = it.getString(
-                    it.getColumnIndexOrThrow("platform")
-                ),
-                caption = it.getString(
-                    it.getColumnIndexOrThrow("caption")
-                ),
-                status = it.getString(
-                    it.getColumnIndexOrThrow("status")
-                ),
-                progress = it.getInt(
-                    it.getColumnIndexOrThrow("progress")
-                ),
-                remotePostId = it.getString(
-                    it.getColumnIndexOrThrow("remote_post_id")
-                ),
-                errorMessage = it.getString(
-                    it.getColumnIndexOrThrow("error_message")
-                ),
-                createdAt = it.getLong(
-                    it.getColumnIndexOrThrow("created_at")
-                ),
-                updatedAt = it.getLong(
-                    it.getColumnIndexOrThrow("updated_at")
-                )
-            )
+            return cursorToJob(it)
         }
     }
 
     fun getAllJobs(): List<PublishJob> {
 
-        val jobs = mutableListOf<PublishJob>()
+        val jobs =
+            mutableListOf<PublishJob>()
 
         val cursor =
             database.readableDatabase.query(
@@ -150,38 +135,7 @@ class PublishRepository(
             while (it.moveToNext()) {
 
                 jobs.add(
-                    PublishJob(
-                        id = it.getLong(
-                            it.getColumnIndexOrThrow("id")
-                        ),
-                        videoId = it.getNullableLong(
-                            "video_id"
-                        ),
-                        platform = it.getString(
-                            it.getColumnIndexOrThrow("platform")
-                        ),
-                        caption = it.getString(
-                            it.getColumnIndexOrThrow("caption")
-                        ),
-                        status = it.getString(
-                            it.getColumnIndexOrThrow("status")
-                        ),
-                        progress = it.getInt(
-                            it.getColumnIndexOrThrow("progress")
-                        ),
-                        remotePostId = it.getString(
-                            it.getColumnIndexOrThrow("remote_post_id")
-                        ),
-                        errorMessage = it.getString(
-                            it.getColumnIndexOrThrow("error_message")
-                        ),
-                        createdAt = it.getLong(
-                            it.getColumnIndexOrThrow("created_at")
-                        ),
-                        updatedAt = it.getLong(
-                            it.getColumnIndexOrThrow("updated_at")
-                        )
-                    )
+                    cursorToJob(it)
                 )
             }
         }
@@ -230,6 +184,35 @@ class PublishRepository(
             )
     }
 
+    fun updateRemotePostId(
+        id: Long,
+        remotePostId: String
+    ): Int {
+
+        val values =
+            ContentValues().apply {
+
+                put(
+                    "remote_post_id",
+                    remotePostId
+                )
+
+                put(
+                    "updated_at",
+                    System.currentTimeMillis()
+                )
+            }
+
+        return database
+            .writableDatabase
+            .update(
+                "publish_jobs",
+                values,
+                "id = ?",
+                arrayOf(id.toString())
+            )
+    }
+
     fun deleteJob(
         id: Long
     ): Int {
@@ -241,6 +224,103 @@ class PublishRepository(
                 "id = ?",
                 arrayOf(id.toString())
             )
+    }
+
+    private fun cursorToJob(
+        cursor: android.database.Cursor
+    ): PublishJob {
+
+        return PublishJob(
+
+            id =
+                cursor.getLong(
+                    cursor.getColumnIndexOrThrow(
+                        "id"
+                    )
+                ),
+
+            videoId =
+                cursor.getNullableLong(
+                    "video_id"
+                ),
+
+            platform =
+                cursor.getString(
+                    cursor.getColumnIndexOrThrow(
+                        "platform"
+                    )
+                ),
+
+            caption =
+                cursor.getString(
+                    cursor.getColumnIndexOrThrow(
+                        "caption"
+                    )
+                ),
+
+            youtubeTitle =
+                cursor.getString(
+                    cursor.getColumnIndexOrThrow(
+                        "youtube_title"
+                    )
+                ),
+
+            youtubePrivacy =
+                cursor.getString(
+                    cursor.getColumnIndexOrThrow(
+                        "youtube_privacy"
+                    )
+                ),
+
+            hashtags =
+                cursor.getString(
+                    cursor.getColumnIndexOrThrow(
+                        "hashtags"
+                    )
+                ),
+
+            status =
+                cursor.getString(
+                    cursor.getColumnIndexOrThrow(
+                        "status"
+                    )
+                ),
+
+            progress =
+                cursor.getInt(
+                    cursor.getColumnIndexOrThrow(
+                        "progress"
+                    )
+                ),
+
+            remotePostId =
+                cursor.getString(
+                    cursor.getColumnIndexOrThrow(
+                        "remote_post_id"
+                    )
+                ),
+
+            errorMessage =
+                cursor.getString(
+                    cursor.getColumnIndexOrThrow(
+                        "error_message"
+                    )
+                ),
+
+            createdAt =
+                cursor.getLong(
+                    cursor.getColumnIndexOrThrow(
+                        "created_at"
+                    )
+                ),
+
+            updatedAt =
+                cursor.getLong(
+                    cursor.getColumnIndexOrThrow(
+                        "updated_at"
+                    )
+                )
+        )
     }
 
     private fun ContentValues.putNullable(
@@ -272,7 +352,9 @@ class PublishRepository(
     ): Long? {
 
         val index =
-            getColumnIndexOrThrow(columnName)
+            getColumnIndexOrThrow(
+                columnName
+            )
 
         return if (isNull(index)) {
             null

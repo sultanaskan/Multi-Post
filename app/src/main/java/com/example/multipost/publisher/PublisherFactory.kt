@@ -1,8 +1,11 @@
 package com.example.multipost.publisher
 
+import android.content.Context
+
 object PublisherFactory {
 
     fun create(
+        context: Context,
         platform: String
     ): SocialPublisher {
 
@@ -11,7 +14,9 @@ object PublisherFactory {
         ) {
 
             "youtube" ->
-                SimulatedPublisher()
+                YouTubePublisher(
+                    context
+                )
 
             "tiktok" ->
                 SimulatedPublisher()

@@ -20,6 +20,7 @@ import com.example.multipost.repository.PublishRepository
 import com.example.multipost.repository.VideoRepository
 import com.example.multipost.upload.UploadManager
 import com.google.android.material.button.MaterialButton
+import androidx.core.net.toUri
 
 class PostReviewActivity : AppCompatActivity() {
 
@@ -188,9 +189,7 @@ class PostReviewActivity : AppCompatActivity() {
         }
 
         videoUri =
-            Uri.parse(
-                videoUriString
-            )
+            videoUriString.toUri()
 
         val caption =
             intent.getStringExtra(
@@ -236,10 +235,8 @@ class PostReviewActivity : AppCompatActivity() {
             caption
 
         hashtagsText.text =
-            if (hashtags.isEmpty()) {
+            hashtags.ifEmpty {
                 "No hashtags"
-            } else {
-                hashtags
             }
 
         platformsText.text =
@@ -502,6 +499,21 @@ class PostReviewActivity : AppCompatActivity() {
                         EXTRA_CAPTION
                     ).orEmpty()
 
+                val hashtags =
+                    intent.getStringExtra(
+                        EXTRA_HASHTAGS
+                    ).orEmpty()
+
+                val youtubeTitle =
+                    intent.getStringExtra(
+                        EXTRA_YOUTUBE_TITLE
+                    ).orEmpty()
+
+                val youtubePrivacy =
+                    intent.getStringExtra(
+                        EXTRA_YOUTUBE_PRIVACY
+                    ).orEmpty()
+
                 var createdJobs =
                     0
 
@@ -512,6 +524,39 @@ class PostReviewActivity : AppCompatActivity() {
                             videoId = videoId,
                             platform = platform,
                             caption = caption,
+                            youtubeTitle =
+                                if (
+                                    platform.equals(
+                                        "YouTube",
+                                        ignoreCase = true
+                                    )
+                                ) {
+                                    youtubeTitle
+                                } else {
+                                    ""
+                                },
+                            youtubePrivacy =
+                                if (
+                                    platform.equals(
+                                        "YouTube",
+                                        ignoreCase = true
+                                    )
+                                ) {
+                                    youtubePrivacy
+                                } else {
+                                    "Private"
+                                },
+                            hashtags =
+                                if (
+                                    platform.equals(
+                                        "YouTube",
+                                        ignoreCase = true
+                                    )
+                                ) {
+                                    hashtags
+                                } else {
+                                    ""
+                                },
                             status = "pending",
                             progress = 0
                         )
@@ -823,5 +868,4 @@ class PostReviewActivity : AppCompatActivity() {
         val height: Int,
         val fileSize: Long
     )
-
 }

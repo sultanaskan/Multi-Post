@@ -119,6 +119,7 @@ class UploadWorker(
 
             val publisher =
                 PublisherFactory.create(
+                    applicationContext,
                     platform
                 )
 
@@ -147,12 +148,9 @@ class UploadWorker(
 
                     setProgress(
                         workDataOf(
-                            OUTPUT_JOB_ID to
-                                    jobId,
-                            OUTPUT_PLATFORM to
-                                    platform,
-                            OUTPUT_PROGRESS to
-                                    progress,
+                            OUTPUT_JOB_ID to jobId,
+                            OUTPUT_PLATFORM to platform,
+                            OUTPUT_PROGRESS to progress,
                             OUTPUT_STATUS to
                                     "uploading"
                         )
@@ -182,6 +180,15 @@ class UploadWorker(
 
                 is PublishResult.Success -> {
 
+                    if (!result.remotePostId.isNullOrBlank()) {
+
+                        publishRepository.updateRemotePostId(
+                            id = jobId,
+                            remotePostId =
+                                result.remotePostId
+                        )
+                    }
+
                     publishRepository.updateJobStatus(
                         id = jobId,
                         status = "completed",
@@ -195,14 +202,37 @@ class UploadWorker(
 
                     Result.success(
                         workDataOf(
-                            OUTPUT_JOB_ID to
-                                    jobId,
-                            OUTPUT_PLATFORM to
-                                    platform,
-                            OUTPUT_PROGRESS to
-                                    100,
+                            OUTPUT_JOB_ID to jobId,
+                            OUTPUT_PLATFORM to platform,
+                            OUTPUT_PROGRESS to 100,
                             OUTPUT_STATUS to
                                     "completed"
+                        )
+                    )
+                }
+
+                is PublishResult.AuthenticationRequired -> {
+
+                    publishRepository.updateJobStatus(
+                        id = jobId,
+                        status = "auth_required",
+                        progress = job.progress,
+                        errorMessage =
+                            result.message
+                    )
+
+                    showAuthenticationRequiredNotification(
+                        jobId = jobId,
+                        platform = platform
+                    )
+
+                    Result.failure(
+                        workDataOf(
+                            OUTPUT_JOB_ID to jobId,
+                            OUTPUT_PLATFORM to platform,
+                            OUTPUT_PROGRESS to job.progress,
+                            OUTPUT_STATUS to
+                                    "auth_required"
                         )
                     )
                 }
@@ -224,12 +254,9 @@ class UploadWorker(
 
                     Result.failure(
                         workDataOf(
-                            OUTPUT_JOB_ID to
-                                    jobId,
-                            OUTPUT_PLATFORM to
-                                    platform,
-                            OUTPUT_PROGRESS to
-                                    job.progress,
+                            OUTPUT_JOB_ID to jobId,
+                            OUTPUT_PLATFORM to platform,
+                            OUTPUT_PROGRESS to job.progress,
                             OUTPUT_STATUS to
                                     "failed"
                         )
@@ -256,12 +283,9 @@ class UploadWorker(
 
             Result.failure(
                 workDataOf(
-                    OUTPUT_JOB_ID to
-                            jobId,
-                    OUTPUT_PLATFORM to
-                            platform,
-                    OUTPUT_PROGRESS to
-                            0,
+                    OUTPUT_JOB_ID to jobId,
+                    OUTPUT_PLATFORM to platform,
+                    OUTPUT_PROGRESS to 0,
                     OUTPUT_STATUS to
                             "failed"
                 )
@@ -307,6 +331,28 @@ class UploadWorker(
             ),
             notificationHelper
                 .buildCompletedNotification(
+                    jobId = jobId,
+                    platform = platform
+                )
+        )
+    }
+
+    private fun showAuthenticationRequiredNotification(
+        jobId: Long,
+        platform: String
+    ) {
+
+        val manager =
+            applicationContext.getSystemService(
+                Context.NOTIFICATION_SERVICE
+            ) as android.app.NotificationManager
+
+        manager.notify(
+            notificationHelper.getNotificationId(
+                jobId
+            ),
+            notificationHelper
+                .buildAuthenticationRequiredNotification(
                     jobId = jobId,
                     platform = platform
                 )

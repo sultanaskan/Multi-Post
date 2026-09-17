@@ -8,8 +8,8 @@ import android.widget.Toast
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import com.example.multipost.model.SocialAccount
 import com.example.multipost.repository.AccountRepository
+import com.example.multipost.upload.UploadManager
 import com.google.android.gms.auth.api.identity.AuthorizationRequest
 import com.google.android.gms.auth.api.identity.AuthorizationResult
 import com.google.android.gms.auth.api.identity.Identity
@@ -22,21 +22,35 @@ class YouTubeAuthActivity : AppCompatActivity() {
         private const val YOUTUBE_UPLOAD_SCOPE =
             "https://www.googleapis.com/auth/youtube.upload"
 
+        private const val YOUTUBE_READONLY_SCOPE =
+            "https://www.googleapis.com/auth/youtube.readonly"
+
         private const val YOUTUBE_ACCOUNT_ID =
             "youtube_default"
+
+        private const val EXTRA_AUTH_REQUIRED =
+            "auth_required"
+
+        private const val EXTRA_JOB_ID =
+            "job_id"
     }
 
     private lateinit var statusText: TextView
     private lateinit var authorizeButton: Button
 
     private lateinit var accountRepository: AccountRepository
+    private lateinit var uploadManager: UploadManager
+
+    private var pendingJobId: Long = 0L
 
     private val authorizationLauncher =
         registerForActivityResult(
             ActivityResultContracts.StartIntentSenderForResult()
         ) { result ->
 
-            if (result.resultCode != RESULT_OK) {
+            if (
+                result.resultCode != RESULT_OK
+            ) {
 
                 showError(
                     "YouTube authorization was cancelled."
@@ -72,10 +86,22 @@ class YouTubeAuthActivity : AppCompatActivity() {
     override fun onCreate(
         savedInstanceState: Bundle?
     ) {
-        super.onCreate(savedInstanceState)
+
+        super.onCreate(
+            savedInstanceState
+        )
 
         accountRepository =
             AccountRepository(this)
+
+        uploadManager =
+            UploadManager(this)
+
+        pendingJobId =
+            intent.getLongExtra(
+                EXTRA_JOB_ID,
+                0L
+            )
 
         createUi()
     }
@@ -110,7 +136,13 @@ class YouTubeAuthActivity : AppCompatActivity() {
             TextView(this).apply {
 
                 text =
-                    "Connect your Google account to publish videos to YouTube."
+                    if (
+                        pendingJobId > 0L
+                    ) {
+                        "Your YouTube authorization is required to continue the upload."
+                    } else {
+                        "Connect your Google account to publish videos to YouTube."
+                    }
 
                 textSize =
                     16f
@@ -154,6 +186,9 @@ class YouTubeAuthActivity : AppCompatActivity() {
             listOf(
                 Scope(
                     YOUTUBE_UPLOAD_SCOPE
+                ),
+                Scope(
+                    YOUTUBE_READONLY_SCOPE
                 )
             )
 
@@ -191,12 +226,16 @@ class YouTubeAuthActivity : AppCompatActivity() {
         result: AuthorizationResult
     ) {
 
-        if (result.hasResolution()) {
+        if (
+            result.hasResolution()
+        ) {
 
             val pendingIntent =
                 result.pendingIntent
 
-            if (pendingIntent == null) {
+            if (
+                pendingIntent == null
+            ) {
 
                 showError(
                     "Google authorization requires user approval, but no authorization request was provided."
@@ -232,7 +271,9 @@ class YouTubeAuthActivity : AppCompatActivity() {
         val accessToken =
             result.accessToken
 
-        if (accessToken.isNullOrBlank()) {
+        if (
+            accessToken.isNullOrBlank()
+        ) {
 
             showError(
                 "Authorization completed, but no access token was returned."
@@ -258,17 +299,24 @@ class YouTubeAuthActivity : AppCompatActivity() {
                         YOUTUBE_ACCOUNT_ID
                     )
 
-            if (existingAccount == null) {
+            if (
+                existingAccount == null
+            ) {
 
                 val account =
-                    SocialAccount(
+                    com.example.multipost.model.SocialAccount(
                         id = 0L,
                         platform = "youtube",
-                        accountId = YOUTUBE_ACCOUNT_ID,
-                        accountName = "YouTube",
-                        accessToken = accessToken,
-                        refreshToken = null,
-                        tokenExpiresAt = 0L,
+                        accountId =
+                            YOUTUBE_ACCOUNT_ID,
+                        accountName =
+                            "YouTube",
+                        accessToken =
+                            accessToken,
+                        refreshToken =
+                            null,
+                        tokenExpiresAt =
+                            0L,
                         createdAt =
                             System.currentTimeMillis(),
                         updatedAt =
@@ -277,9 +325,13 @@ class YouTubeAuthActivity : AppCompatActivity() {
 
                 val insertedId =
                     accountRepository
-                        .insertAccount(account)
+                        .insertAccount(
+                            account
+                        )
 
-                if (insertedId == -1L) {
+                if (
+                    insertedId == -1L
+                ) {
 
                     showError(
                         "YouTube account could not be saved."
@@ -292,7 +344,8 @@ class YouTubeAuthActivity : AppCompatActivity() {
 
                 accountRepository.updateAccount(
                     existingAccount.copy(
-                        accessToken = accessToken,
+                        accessToken =
+                            accessToken,
                         updatedAt =
                             System.currentTimeMillis()
                     )
@@ -305,11 +358,12 @@ class YouTubeAuthActivity : AppCompatActivity() {
                         accessToken,
                     refreshToken =
                         existingAccount.refreshToken,
-                    expiresAt = 0L
+                    expiresAt =
+                        0L
                 )
             }
 
-            showSuccess()
+            handleAuthenticationSuccess()
 
         } catch (exception: Exception) {
 
@@ -322,6 +376,73 @@ class YouTubeAuthActivity : AppCompatActivity() {
         }
     }
 
+    private fun handleAuthenticationSuccess() {
+
+        if (
+            pendingJobId > 0L
+        ) {
+
+            statusText.text =
+                "YouTube connected. Retrying your upload..."
+
+            authorizeButton.isEnabled =
+                false
+
+            retryPendingUpload()
+
+        } else {
+
+            showSuccess()
+        }
+    }
+
+    private fun retryPendingUpload() {
+
+        try {
+
+            val account =
+                accountRepository
+                    .getAccountByAccountId(
+                        YOUTUBE_ACCOUNT_ID
+                    )
+
+            if (
+                account == null
+            ) {
+
+                showError(
+                    "YouTube account could not be found after authorization."
+                )
+
+                return
+            }
+
+            uploadManager.retryUpload(
+                jobId =
+                    pendingJobId,
+                platform =
+                    "youtube"
+            )
+
+            Toast.makeText(
+                this,
+                "YouTube authorization successful. Upload restarted.",
+                Toast.LENGTH_LONG
+            ).show()
+
+            finish()
+
+        } catch (exception: Exception) {
+
+            exception.printStackTrace()
+
+            showError(
+                exception.message
+                    ?: "Failed to retry the upload."
+            )
+        }
+    }
+
     private fun showSuccess() {
 
         authorizeButton.isEnabled =
@@ -330,10 +451,10 @@ class YouTubeAuthActivity : AppCompatActivity() {
         statusText.text =
             """
             YouTube authorization successful.
-            
+
             Account:
             YouTube
-            
+
             Access token:
             Saved securely.
             """.trimIndent()

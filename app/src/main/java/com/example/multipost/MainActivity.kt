@@ -37,29 +37,39 @@ class MainActivity : AppCompatActivity() {
         )
 
         bottomNavigation =
-            findViewById(R.id.bottomNavigation)
+            findViewById(
+                R.id.bottomNavigation
+            )
 
         bottomNavigation.setOnItemSelectedListener { item ->
 
             when (item.itemId) {
 
                 R.id.navigation_home -> {
-                    openFragment(HomeFragment())
+                    openFragment(
+                        HomeFragment()
+                    )
                     true
                 }
 
                 R.id.navigation_upload -> {
-                    openFragment(UploadFragment())
+                    openFragment(
+                        UploadFragment()
+                    )
                     true
                 }
 
                 R.id.navigation_accounts -> {
-                    openFragment(AccountsFragment())
+                    openFragment(
+                        AccountsFragment()
+                    )
                     true
                 }
 
                 R.id.navigation_history -> {
-                    openFragment(HistoryFragment())
+                    openFragment(
+                        HistoryFragment()
+                    )
                     true
                 }
 
@@ -67,9 +77,13 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        if (savedInstanceState == null) {
+        if (
+            savedInstanceState == null
+        ) {
 
-            if (shouldOpenHistory(intent)) {
+            if (
+                shouldOpenHistory(intent)
+            ) {
 
                 openHistoryFromNotification()
 
@@ -91,7 +105,10 @@ class MainActivity : AppCompatActivity() {
 
         setIntent(intent)
 
-        if (shouldOpenHistory(intent)) {
+        if (
+            shouldOpenHistory(intent)
+        ) {
+
             openHistoryFromNotification()
         }
     }
@@ -159,5 +176,4 @@ class MainActivity : AppCompatActivity() {
             )
             .commit()
     }
-
 }

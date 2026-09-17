@@ -10,14 +10,28 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.example.multipost.R
 import com.example.multipost.auth.YouTubeAuthActivity
+import com.example.multipost.network.YouTubeApiService
 import com.example.multipost.repository.AccountRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class AccountsFragment : Fragment() {
 
     private lateinit var accountRepository: AccountRepository
 
     private lateinit var youtubeStatusText: TextView
+    private lateinit var youtubeChannelText: TextView
     private lateinit var youtubeButton: Button
+
+    private val fragmentScope =
+        CoroutineScope(
+            SupervisorJob() +
+                    Dispatchers.Main
+        )
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -25,11 +39,12 @@ class AccountsFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
 
-        val view = inflater.inflate(
-            R.layout.fragment_accounts,
-            container,
-            false
-        )
+        val view =
+            inflater.inflate(
+                R.layout.fragment_accounts,
+                container,
+                false
+            )
 
         accountRepository =
             AccountRepository(requireContext())
@@ -39,20 +54,15 @@ class AccountsFragment : Fragment() {
                 R.id.textYouTubeStatus
             )
 
+        youtubeChannelText =
+            view.findViewById(
+                R.id.textYouTubeChannel
+            )
+
         youtubeButton =
             view.findViewById(
                 R.id.buttonConnectYouTube
             )
-
-        youtubeButton.setOnClickListener {
-
-            val intent = Intent(
-                requireContext(),
-                YouTubeAuthActivity::class.java
-            )
-
-            startActivity(intent)
-        }
 
         updateYouTubeAccountState()
 
@@ -60,6 +70,7 @@ class AccountsFragment : Fragment() {
     }
 
     override fun onResume() {
+
         super.onResume()
 
         if (::accountRepository.isInitialized) {
@@ -74,7 +85,8 @@ class AccountsFragment : Fragment() {
                 "youtube_default"
             )
 
-        if (account != null &&
+        if (
+            account != null &&
             !account.accessToken.isNullOrBlank()
         ) {
 
@@ -89,22 +101,105 @@ class AccountsFragment : Fragment() {
                 disconnectYouTube()
             }
 
+            loadYouTubeChannel()
+
         } else {
 
             youtubeStatusText.text =
                 "Connect your YouTube account to publish videos."
+
+            youtubeChannelText.visibility =
+                View.GONE
 
             youtubeButton.text =
                 "Connect YouTube"
 
             youtubeButton.setOnClickListener {
 
-                val intent = Intent(
-                    requireContext(),
-                    YouTubeAuthActivity::class.java
-                )
+                val intent =
+                    Intent(
+                        requireContext(),
+                        YouTubeAuthActivity::class.java
+                    )
 
                 startActivity(intent)
+            }
+        }
+    }
+
+    private fun loadYouTubeChannel() {
+
+        youtubeChannelText.visibility =
+            View.VISIBLE
+
+        youtubeChannelText.text =
+            "Loading channel information..."
+
+        fragmentScope.launch {
+
+            try {
+
+                val account =
+                    accountRepository
+                        .getAccountByAccountId(
+                            "youtube_default"
+                        )
+
+                if (account == null) {
+
+                    youtubeChannelText.visibility =
+                        View.GONE
+
+                    return@launch
+                }
+
+                val accessToken =
+                    accountRepository
+                        .getAccessToken(
+                            account.accountId
+                        )
+
+                if (accessToken.isNullOrBlank()) {
+
+                    youtubeChannelText.text =
+                        "YouTube access token was not found."
+
+                    return@launch
+                }
+
+                val channelInfo =
+                    withContext(
+                        Dispatchers.IO
+                    ) {
+
+                        YouTubeApiService(
+                            requireContext()
+                        ).getMyChannelInfo(
+                            accessToken
+                        )
+                    }
+
+                youtubeChannelText.text =
+                    """
+                    Channel: ${channelInfo.channelTitle}
+
+                    Channel ID: ${channelInfo.channelId}
+
+                    Subscribers: ${channelInfo.subscriberCount}
+
+                    Videos: ${channelInfo.videoCount}
+                    """.trimIndent()
+
+            } catch (exception: Exception) {
+
+                exception.printStackTrace()
+
+                youtubeChannelText.text =
+                    """
+                    Unable to load YouTube channel information.
+
+                    ${exception.message}
+                    """.trimIndent()
             }
         }
     }
@@ -132,7 +227,11 @@ class AccountsFragment : Fragment() {
 
     override fun onDestroyView() {
 
-        accountRepository.close()
+        fragmentScope.cancel()
+
+        if (::accountRepository.isInitialized) {
+            accountRepository.close()
+        }
 
         super.onDestroyView()
     }

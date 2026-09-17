@@ -13,7 +13,9 @@ class DatabaseHelper(
     DATABASE_VERSION
 ) {
 
-    override fun onCreate(db: SQLiteDatabase) {
+    override fun onCreate(
+        db: SQLiteDatabase
+    ) {
 
         db.execSQL(
             """
@@ -71,6 +73,9 @@ class DatabaseHelper(
                 video_id INTEGER,
                 platform TEXT NOT NULL,
                 caption TEXT,
+                youtube_title TEXT DEFAULT '',
+                youtube_privacy TEXT DEFAULT 'Private',
+                hashtags TEXT DEFAULT '',
                 status TEXT NOT NULL,
                 progress INTEGER DEFAULT 0,
                 remote_post_id TEXT,
@@ -90,7 +95,30 @@ class DatabaseHelper(
         oldVersion: Int,
         newVersion: Int
     ) {
-        // Future database migrations will be added here.
+
+        if (oldVersion < 2) {
+
+            db.execSQL(
+                """
+                ALTER TABLE publish_jobs
+                ADD COLUMN youtube_title TEXT DEFAULT ''
+                """.trimIndent()
+            )
+
+            db.execSQL(
+                """
+                ALTER TABLE publish_jobs
+                ADD COLUMN youtube_privacy TEXT DEFAULT 'Private'
+                """.trimIndent()
+            )
+
+            db.execSQL(
+                """
+                ALTER TABLE publish_jobs
+                ADD COLUMN hashtags TEXT DEFAULT ''
+                """.trimIndent()
+            )
+        }
     }
 
     companion object {
@@ -98,7 +126,8 @@ class DatabaseHelper(
         private const val DATABASE_NAME =
             "multipost.db"
 
-        private const val DATABASE_VERSION = 1
+        private const val DATABASE_VERSION =
+            2
 
         @Volatile
         private var INSTANCE: DatabaseHelper? = null

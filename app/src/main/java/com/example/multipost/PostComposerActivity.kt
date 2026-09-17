@@ -7,6 +7,8 @@ import android.view.View
 import android.widget.ImageButton
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.multipost.model.YouTubeVideoMetadata
+import com.example.multipost.utils.YouTubeMetadataBuilder
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 
@@ -70,10 +72,14 @@ class PostComposerActivity : AppCompatActivity() {
             "tiktok_privacy"
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(
+        savedInstanceState: Bundle?
+    ) {
         super.onCreate(savedInstanceState)
 
-        setContentView(R.layout.activity_post_composer)
+        setContentView(
+            R.layout.activity_post_composer
+        )
 
         initializeViews()
         loadVideoUri()
@@ -110,22 +116,34 @@ class PostComposerActivity : AppCompatActivity() {
             findViewById(R.id.continueButton)
 
         youtubeSettingsContainer =
-            findViewById(R.id.youtubeSettingsContainer)
+            findViewById(
+                R.id.youtubeSettingsContainer
+            )
 
         instagramSettingsContainer =
-            findViewById(R.id.instagramSettingsContainer)
+            findViewById(
+                R.id.instagramSettingsContainer
+            )
 
         facebookSettingsContainer =
-            findViewById(R.id.facebookSettingsContainer)
+            findViewById(
+                R.id.facebookSettingsContainer
+            )
 
         tiktokSettingsContainer =
-            findViewById(R.id.tiktokSettingsContainer)
+            findViewById(
+                R.id.tiktokSettingsContainer
+            )
 
         youtubeTitleInput =
-            findViewById(R.id.youtubeTitleInput)
+            findViewById(
+                R.id.youtubeTitleInput
+            )
 
         youtubePrivacyButton =
-            findViewById(R.id.youtubePrivacyButton)
+            findViewById(
+                R.id.youtubePrivacyButton
+            )
 
         instagramContentTypeButton =
             findViewById(
@@ -146,7 +164,9 @@ class PostComposerActivity : AppCompatActivity() {
     private fun loadVideoUri() {
 
         val videoUriString =
-            intent.getStringExtra(EXTRA_VIDEO_URI)
+            intent.getStringExtra(
+                EXTRA_VIDEO_URI
+            )
 
         if (videoUriString.isNullOrEmpty()) {
 
@@ -157,6 +177,7 @@ class PostComposerActivity : AppCompatActivity() {
             ).show()
 
             finish()
+
             return
         }
 
@@ -167,6 +188,7 @@ class PostComposerActivity : AppCompatActivity() {
     private fun setupButtons() {
 
         backButton.setOnClickListener {
+
             finish()
         }
 
@@ -223,22 +245,27 @@ class PostComposerActivity : AppCompatActivity() {
         }
 
         youtubePrivacyButton.setOnClickListener {
+
             showYouTubePrivacyOptions()
         }
 
         instagramContentTypeButton.setOnClickListener {
+
             showInstagramContentTypeOptions()
         }
 
         facebookContentTypeButton.setOnClickListener {
+
             showFacebookContentTypeOptions()
         }
 
         tiktokPrivacyButton.setOnClickListener {
+
             showTikTokPrivacyOptions()
         }
 
         continueButton.setOnClickListener {
+
             openReviewScreen()
         }
     }
@@ -273,16 +300,22 @@ class PostComposerActivity : AppCompatActivity() {
 
         if (selected) {
 
-            button.alpha = 1.0f
-            button.strokeWidth = 3
+            button.alpha =
+                1.0f
+
+            button.strokeWidth =
+                3
 
             button.text =
                 "✓ ${getPlatformName(button)}"
 
         } else {
 
-            button.alpha = 0.65f
-            button.strokeWidth = 1
+            button.alpha =
+                0.65f
+
+            button.strokeWidth =
+                1
 
             button.text =
                 getPlatformName(button)
@@ -352,11 +385,16 @@ class PostComposerActivity : AppCompatActivity() {
                 "Private"
             )
 
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("YouTube Privacy")
+        androidx.appcompat.app.AlertDialog
+            .Builder(this)
+            .setTitle(
+                "YouTube Privacy"
+            )
             .setSingleChoiceItems(
                 options,
-                options.indexOf(youtubePrivacy)
+                options.indexOf(
+                    youtubePrivacy
+                )
             ) { dialog, which ->
 
                 youtubePrivacy =
@@ -378,11 +416,16 @@ class PostComposerActivity : AppCompatActivity() {
                 "Post"
             )
 
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Instagram Content Type")
+        androidx.appcompat.app.AlertDialog
+            .Builder(this)
+            .setTitle(
+                "Instagram Content Type"
+            )
             .setSingleChoiceItems(
                 options,
-                options.indexOf(instagramContentType)
+                options.indexOf(
+                    instagramContentType
+                )
             ) { dialog, which ->
 
                 instagramContentType =
@@ -404,11 +447,16 @@ class PostComposerActivity : AppCompatActivity() {
                 "Video"
             )
 
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Facebook Content Type")
+        androidx.appcompat.app.AlertDialog
+            .Builder(this)
+            .setTitle(
+                "Facebook Content Type"
+            )
             .setSingleChoiceItems(
                 options,
-                options.indexOf(facebookContentType)
+                options.indexOf(
+                    facebookContentType
+                )
             ) { dialog, which ->
 
                 facebookContentType =
@@ -431,11 +479,16 @@ class PostComposerActivity : AppCompatActivity() {
                 "Private"
             )
 
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("TikTok Privacy")
+        androidx.appcompat.app.AlertDialog
+            .Builder(this)
+            .setTitle(
+                "TikTok Privacy"
+            )
             .setSingleChoiceItems(
                 options,
-                options.indexOf(tiktokPrivacy)
+                options.indexOf(
+                    tiktokPrivacy
+                )
             ) { dialog, which ->
 
                 tiktokPrivacy =
@@ -484,13 +537,13 @@ class PostComposerActivity : AppCompatActivity() {
             return
         }
 
-        if (youtubeSelected) {
+        val youtubeTitle =
+            youtubeTitleInput.text
+                ?.toString()
+                ?.trim()
+                .orEmpty()
 
-            val youtubeTitle =
-                youtubeTitleInput.text
-                    ?.toString()
-                    ?.trim()
-                    .orEmpty()
+        if (youtubeSelected) {
 
             if (youtubeTitle.isEmpty()) {
 
@@ -501,6 +554,12 @@ class PostComposerActivity : AppCompatActivity() {
 
                 return
             }
+
+            validateYouTubeMetadata(
+                title = youtubeTitle,
+                description = caption,
+                hashtags = hashtags
+            ) ?: return
         }
 
         val intent =
@@ -531,10 +590,7 @@ class PostComposerActivity : AppCompatActivity() {
 
         intent.putExtra(
             EXTRA_YOUTUBE_TITLE,
-            youtubeTitleInput.text
-                ?.toString()
-                ?.trim()
-                .orEmpty()
+            youtubeTitle
         )
 
         intent.putExtra(
@@ -558,6 +614,58 @@ class PostComposerActivity : AppCompatActivity() {
         )
 
         startActivity(intent)
+    }
+
+    private fun validateYouTubeMetadata(
+        title: String,
+        description: String,
+        hashtags: String
+    ): YouTubeVideoMetadata? {
+
+        return try {
+
+            val privacyStatus =
+                when (youtubePrivacy) {
+
+                    "Public" ->
+                        YouTubeVideoMetadata
+                            .PrivacyStatus
+                            .PUBLIC
+
+                    "Unlisted" ->
+                        YouTubeVideoMetadata
+                            .PrivacyStatus
+                            .UNLISTED
+
+                    "Private" ->
+                        YouTubeVideoMetadata
+                            .PrivacyStatus
+                            .PRIVATE
+
+                    else ->
+                        YouTubeVideoMetadata
+                            .PrivacyStatus
+                            .PRIVATE
+                }
+
+            YouTubeMetadataBuilder.build(
+                title = title,
+                description = description,
+                hashtags = hashtags,
+                privacyStatus = privacyStatus
+            )
+
+        } catch (exception: IllegalArgumentException) {
+
+            Toast.makeText(
+                this,
+                exception.message
+                    ?: "Invalid YouTube metadata.",
+                Toast.LENGTH_LONG
+            ).show()
+
+            null
+        }
     }
 
     private fun hasSelectedPlatform(): Boolean {
@@ -591,5 +699,4 @@ class PostComposerActivity : AppCompatActivity() {
 
         return platforms.joinToString(", ")
     }
-
 }

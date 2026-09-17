@@ -62,4 +62,5 @@ dependencies {
 
     // YouTube Data API
     implementation("com.google.apis:google-api-services-youtube:v3-rev20260820-2.0.0")
+    implementation("com.google.api-client:google-api-client-gson:2.8.1")
 }

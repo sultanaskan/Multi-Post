@@ -59,6 +59,16 @@
                     android:textSize="14sp"
                     android:textColor="?attr/colorOnSurfaceVariant" />
 
+                <TextView
+                    android:id="@+id/textYouTubeChannel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text=""
+                    android:textSize="14sp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:visibility="gone" />
+
                 <Button
                     android:id="@+id/buttonConnectYouTube"
                     android:layout_width="match_parent"
